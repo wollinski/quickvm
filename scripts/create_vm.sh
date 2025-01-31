@@ -20,4 +20,6 @@ virt-install \
     --nographics \
     --disk path="$DISKIMAGE" \
     --import \
+    --filesystem type=mount,mode=passthrough,source="$WORKDIR",target="shared_dir",driver.type=virtiofs,driver.queue=1024 \
+    --memorybacking source.type=memfd,access.mode=shared \
     --cloud-init user-data="${CLOUDINIT_DATA}/user-data",meta-data="${CLOUDINIT_DATA}/meta-data"
