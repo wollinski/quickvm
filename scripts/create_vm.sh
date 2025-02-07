@@ -18,6 +18,7 @@ set -ue
 : "${CLOUDINIT_DATA:="${CONFIGDIR}/cloudinit"}"
 
 : "${SSH_DIR:="${CONFIGDIR}/.ssh"}"
+: "${CONNECTION_DELAY_SECONDS:="5"}"
 
 
 
@@ -34,10 +35,25 @@ initCloudInit() {
     # If there is a pub key in cloud init that was already deployed to VM it must be checked that the required privkey is avail.
     # For now only check that there is no priv key file yet
     [ -f "${SSH_DIR}/${VMNAME}" ] || ssh-keygen -t ed25519 -f "${WORKDIR}/${SSH_DIR}/${VMNAME}" -P ""
+    [ -f "${SSH_DIR}/${VMNAME}-hostkey" ] || ssh-keygen -t ed25519 -f "${WORKDIR}/${SSH_DIR}/${VMNAME}-hostkey" -P "" -C ""
 
-    [ -f "${CLOUDINIT_DATA}/user-data" ] || SSH_PUBKEY="$(cat "${SSH_DIR}/${VMNAME}.pub")" envsubst < "${TEMPLATES}/cloudinit/user-data.tpl" > "${CLOUDINIT_DATA}/user-data"
+    [ -f "${CLOUDINIT_DATA}/user-data" ] || newUserData
     # ToDo: Use meta-data to set hostname for DNS
     [ -f "${CLOUDINIT_DATA}/meta-data" ] || touch "${CLOUDINIT_DATA}/meta-data"
+}
+
+newUserData() {
+    # read exits with non-zero exit code when encountering EOF.
+    # ToDo: only catch "EOF" error-code
+    IFS= read -rd '' HOSTKEY_ED25519_PRIV < "${SSH_DIR}/${VMNAME}-hostkey" || true
+    env \
+        SSH_PUBKEY="$(cat "${SSH_DIR}/${VMNAME}.pub")" \
+        HOSTKEY_ED25519_PRIV="$HOSTKEY_ED25519_PRIV" \
+        HOSTKEY_ED25519_PUB="$(cat "${SSH_DIR}/${VMNAME}-hostkey.pub")" \
+        yq e '.ssh_keys.ed25519_private = strenv(HOSTKEY_ED25519_PRIV) |
+            .ssh_keys.ed25519_public = strenv(HOSTKEY_ED25519_PUB) |
+            .users[0].ssh_authorized_keys[0] = strenv(SSH_PUBKEY)' \
+            "${TEMPLATES}/cloudinit/user-data.tpl" > "${CLOUDINIT_DATA}/user-data"
 }
 
 downloadImage() {
@@ -72,3 +88,19 @@ initCloudInit
 initVM
 
 #virsh --connect qemu:///system console "${VMNAME}"
+
+VMIP=""
+while [ -z "${VMIP}" ]
+do
+    echo "Attempting to get VM IP..."
+    # ToDo: More stable way to do this. What if more than one line is output?
+    VMIP="$(virsh -q domifaddr "$VMNAME" | awk '{ print $4 }' | cut -d '/' -f 1)"
+    sleep 2
+done
+
+# ToDo: Wait for ssh daemon
+echo "Waiting ${CONNECTION_DELAY_SECONDS} seconds for VM to become available via ssh..." >&2
+sleep "$CONNECTION_DELAY_SECONDS"
+
+[ -f "${SSH_DIR}/known_hosts" ] || cat <(echo -n "$VMIP ") "${WORKDIR}/${SSH_DIR}/${VMNAME}-hostkey.pub" > "${SSH_DIR}/known_hosts"
+ssh -i "${SSH_DIR}/${VMNAME}" -o "UserKnownHostsFile=${SSH_DIR}/known_hosts" developer@"${VMIP}"
