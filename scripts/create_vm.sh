@@ -8,7 +8,7 @@ set -ue
 : "${CONFIGDIR:=".isolation"}"
 
 # ToDo: Installation or something that populates this.
-: "${TEMPLATES:="${HOME}/.config/isolated-dev/templates"}"
+: "${TEMPLATES:="${HOME}/.config/quickvm/templates"}"
 
 : "${DISKIMAGE_DOWNLOAD:="https://cloud-images.ubuntu.com/noble/20250122/noble-server-cloudimg-amd64.img"}"
 : "${DISKIMAGE_SHA256SUM:="482244b83f49a97ee61fb9b8520d6e8b9c2e3c28648de461ba7e17681ddbd1c9"}"

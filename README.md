@@ -5,6 +5,27 @@ use libvirt to create a (disposable) VM with the following features:
 - easy ssh access
   - e.g. directly drop into shell when VM is created or easy access via helper that also colors the terminal so that it is clear one is in VM
 
+# Installation
+
+ToDo:
+- install script in $PATH
+- cache cloud image on disk?
+
+## cloudinit templates
+When creating a new VM it is initially configured using _cloudinit_. The relevant files are created from templates that are stored under `${HOME}/.config/quickvm` by default:
+```bash
+$ cd ${HOME}/.config/quickvm; tree
+.
+└── templates
+    └── cloudinit
+        ├── meta-data.tpl
+        └── user-data.tpl
+```
+When initially setting up `quickvm` the above file structure can be created as follows:
+```bash
+make templates
+```
+
 # ToDo
 
 ## resize disk
