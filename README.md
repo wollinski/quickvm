@@ -10,6 +10,8 @@ use libvirt to create a (disposable) VM with the following features:
 ToDo:
 - install script in $PATH
 - cache cloud image on disk?
+  - should we use minimal cloud images?
+    - https://cloud-images.ubuntu.com/minimal/releases/
 
 ## cloudinit templates
 When creating a new VM it is initially configured using _cloudinit_. The relevant files are created from templates that are stored under `${HOME}/.config/quickvm` by default:
