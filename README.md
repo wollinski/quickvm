@@ -13,6 +13,23 @@ ToDo:
   - should we use minimal cloud images?
     - https://cloud-images.ubuntu.com/minimal/releases/
 
+## install image signing key
+To validate ubuntu images after download a signing key is installed as follows:
+```bash
+sudo make keyring
+```
+This installs `ubuntu-signingkey.asc` under `/usr/local/share/quickvm/ubuntu-signingkey.gpg`
+The key has the following fingerprint:
+```bash
+$ gpg --keyring /usr/local/share/quickvm/ubuntu-signingkey.gpg --list-keys --with-fingerprint
+/usr/local/share/quickvm/ubuntu-signingkey.gpg
+----------------------------------------------
+pub   rsa4096 2009-09-15 [SC]
+      D2EB 4462 6FDD C30B 513D  5BB7 1A5D 6C4C 7DB8 7C81
+uid           [ unknown] UEC Image Automatic Signing Key <cdimage@ubuntu.com>
+```
+Information about GPG keys used by Ubuntu is here: https://wiki.ubuntu.com/SecurityTeam/FAQ#GPG_Keys_used_by_Ubuntu
+
 ## cloudinit templates
 When creating a new VM it is initially configured using _cloudinit_. The relevant files are created from templates that are stored under `${HOME}/.config/quickvm` by default:
 ```bash

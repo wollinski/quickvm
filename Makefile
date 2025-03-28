@@ -3,6 +3,8 @@ userconfig = $(HOME)/.config/quickvm
 templatepath = $(userconfig)/templates
 cloudinittemplatepath = $(templatepath)/cloudinit
 
+keyringpath = /usr/local/share/quickvm/ubuntu-signingkey.gpg
+
 $(templatepath):
 	@echo "creating template dir"
 	mkdir -p $(templatepath)
@@ -23,3 +25,11 @@ cloudinit-templates: $(cloudinittemplatepath)/user-data.tpl $(cloudinittemplatep
 .PHONY: templates
 templates: cloudinit-templates
 	@echo "target templates"
+
+# https://wiki.ubuntu.com/SecurityTeam/FAQ#GPG_Keys_used_by_Ubuntu
+$(keyringpath):
+	@mkdir -p `dirname $(keyringpath)`
+	@gpg --dearmor --output $(keyringpath) ubuntu-signingkey.asc
+
+.PHONY: keyring
+keyring: $(keyringpath)
