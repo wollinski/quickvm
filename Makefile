@@ -1,4 +1,6 @@
-templatepath = $(HOME)/.config/quickvm/templates
+userconfig = $(HOME)/.config/quickvm
+
+templatepath = $(userconfig)/templates
 cloudinittemplatepath = $(templatepath)/cloudinit
 
 $(templatepath):
