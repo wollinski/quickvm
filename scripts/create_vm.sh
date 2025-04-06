@@ -22,11 +22,6 @@ set -ue
 
 
 
-initDirectory() {
-    [ -d "$CONFIGDIR" ] || (echo "init config dir" >&2 && mkdir "$CONFIGDIR")
-    [ -f "$DISKIMAGE" ] || downloadImage
-}
-
 initCloudInit() {
     [ -d "$CLOUDINIT_DATA" ] || (echo "create cloudinit dir" >&2 && mkdir -p "$CLOUDINIT_DATA")
     [ -d "$SSH_DIR" ] || (echo "create ssh dir" >&2 && mkdir -p "$SSH_DIR")
@@ -56,11 +51,6 @@ newUserData() {
             "${TEMPLATES}/cloudinit/user-data.tpl" > "${CLOUDINIT_DATA}/user-data"
 }
 
-downloadImage() {
-    echo "downloading disk image from $DISKIMAGE_DOWNLOAD" >&2 && wget "$DISKIMAGE_DOWNLOAD" -O $DISKIMAGE
-    sha256sum -c <(echo "${DISKIMAGE_SHA256SUM} ${DISKIMAGE}") || (echo "verifying image hash failed" && exit 74)
-}
-
 createVM() {
     virt-install \
         --name "$VMNAME" \
@@ -83,7 +73,13 @@ initVM() {
 }
 
 # main
-initDirectory
+[ -d "$CONFIGDIR" ] || (echo "init config dir" >&2 && mkdir "$CONFIGDIR")
+
+if [ ! -f "$DISKIMAGE" ]; then
+    echo "downloading disk image from $DISKIMAGE_DOWNLOAD" >&2 && wget "$DISKIMAGE_DOWNLOAD" -O $DISKIMAGE
+    sha256sum -c <(echo "${DISKIMAGE_SHA256SUM} ${DISKIMAGE}") || (echo "verifying image hash failed" && exit 74)
+fi
+
 initCloudInit
 initVM
 
