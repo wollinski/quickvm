@@ -45,6 +45,14 @@ When initially setting up `quickvm` the above file structure can be created as f
 make templates
 ```
 
+## quickvm
+Functions used by the main script are sourced from `$QUICKVM_LIBS` (default: `/usr/local/share/quickvm`). To create the required files in the default location:
+```bash
+sudo make lib
+```
+
+ToDo: Install `quickvm.sh`
+
 # ToDo
 
 ## resize disk

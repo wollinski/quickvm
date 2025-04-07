@@ -3,6 +3,9 @@ set -ue
 
 # ToDo: All variables should be namespaced.
 
+# ToDo: This must be manually synced with the corresponding path in Makefile. Should rather be defined in one single place.
+: "${QUICKVM_LIBS:="/usr/local/lib/quickvm"}"
+
 # ToDo: Is WORKDIR really necessary?
 : "${WORKDIR:="$(pwd)"}"
 : "${CONFIGDIR:=".isolation"}"
@@ -10,9 +13,12 @@ set -ue
 # ToDo: Installation or something that populates this.
 : "${TEMPLATES:="${HOME}/.config/quickvm/templates"}"
 
-: "${DISKIMAGE_DOWNLOAD:="https://cloud-images.ubuntu.com/noble/20250122/noble-server-cloudimg-amd64.img"}"
-: "${DISKIMAGE_SHA256SUM:="482244b83f49a97ee61fb9b8520d6e8b9c2e3c28648de461ba7e17681ddbd1c9"}"
 : "${DISKIMAGE:="${CONFIGDIR}/ubuntu.img"}"
+# ToDo: This must be manually synced with the corresponding path in Makefile. Can this be improved?
+: "${DISKIMAGE_SIGNINGKEY:="/usr/local/share/quickvm/ubuntu-signingkey.gpg"}"
+: "${DISKIMAGE_DOWNLOAD:="https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img"}"
+: "${DISKIMAGE_CHECKSUM_URI:="https://cloud-images.ubuntu.com/noble/current/SHA256SUMS"}"
+: "${DISKIMAGE_CHECKSUM_SIG_URI="https://cloud-images.ubuntu.com/noble/current/SHA256SUMS.gpg"}"
 
 : "${VMNAME:="isolationvm_$(basename "$WORKDIR")"}"
 : "${CLOUDINIT_DATA:="${CONFIGDIR}/cloudinit"}"
@@ -21,6 +27,7 @@ set -ue
 : "${CONNECTION_DELAY_SECONDS:="5"}"
 
 
+source "${QUICKVM_LIBS}/validateImage.sh"
 
 initCloudInit() {
     [ -d "$CLOUDINIT_DATA" ] || (echo "create cloudinit dir" >&2 && mkdir -p "$CLOUDINIT_DATA")
@@ -77,7 +84,7 @@ initVM() {
 
 if [ ! -f "$DISKIMAGE" ]; then
     echo "downloading disk image from $DISKIMAGE_DOWNLOAD" >&2 && wget "$DISKIMAGE_DOWNLOAD" -O $DISKIMAGE
-    sha256sum -c <(echo "${DISKIMAGE_SHA256SUM} ${DISKIMAGE}") || (echo "verifying image hash failed" && exit 74)
+    validateImage "$DISKIMAGE_SIGNINGKEY" "$DISKIMAGE_CHECKSUM_URI" "$DISKIMAGE_CHECKSUM_SIG_URI" "$DISKIMAGE"
 fi
 
 initCloudInit

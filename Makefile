@@ -3,6 +3,8 @@ userconfig = $(HOME)/.config/quickvm
 templatepath = $(userconfig)/templates
 cloudinittemplatepath = $(templatepath)/cloudinit
 
+libpath = /usr/local/lib/quickvm
+
 keyringpath = /usr/local/share/quickvm/ubuntu-signingkey.gpg
 
 $(templatepath):
@@ -25,6 +27,16 @@ cloudinit-templates: $(cloudinittemplatepath)/user-data.tpl $(cloudinittemplatep
 .PHONY: templates
 templates: cloudinit-templates
 	@echo "target templates"
+
+$(libpath):
+	@echo "creating lib dir"
+	mkdir -p $(libpath)
+
+$(libpath)/validateImage.sh: | $(libpath)
+	cp lib/validateImage.sh $(libpath)
+
+.PHONY: lib
+lib: $(libpath)/validateImage.sh
 
 # https://wiki.ubuntu.com/SecurityTeam/FAQ#GPG_Keys_used_by_Ubuntu
 $(keyringpath):
