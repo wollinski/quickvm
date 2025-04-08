@@ -35,8 +35,11 @@ $(libpath):
 $(libpath)/validateImage.sh: | $(libpath)
 	cp lib/validateImage.sh $(libpath)
 
+$(libpath)/cloudInit.sh: | $(libpath)
+	cp lib/cloudInit.sh $(libpath)
+
 .PHONY: lib
-lib: $(libpath)/validateImage.sh
+lib: $(libpath)/validateImage.sh $(libpath)/cloudInit.sh
 
 # https://wiki.ubuntu.com/SecurityTeam/FAQ#GPG_Keys_used_by_Ubuntu
 $(keyringpath):

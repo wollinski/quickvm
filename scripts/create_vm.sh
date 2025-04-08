@@ -28,35 +28,8 @@ set -ue
 
 
 source "${QUICKVM_LIBS}/validateImage.sh"
+source "${QUICKVM_LIBS}/cloudInit.sh"
 
-initCloudInit() {
-    [ -d "$CLOUDINIT_DATA" ] || (echo "create cloudinit dir" >&2 && mkdir -p "$CLOUDINIT_DATA")
-    [ -d "$SSH_DIR" ] || (echo "create ssh dir" >&2 && mkdir -p "$SSH_DIR")
-
-    # ToDo: It should be checked whether VM was already created before doing this.
-    # If there is a pub key in cloud init that was already deployed to VM it must be checked that the required privkey is avail.
-    # For now only check that there is no priv key file yet
-    [ -f "${SSH_DIR}/${VMNAME}" ] || ssh-keygen -t ed25519 -f "${WORKDIR}/${SSH_DIR}/${VMNAME}" -P ""
-    [ -f "${SSH_DIR}/${VMNAME}-hostkey" ] || ssh-keygen -t ed25519 -f "${WORKDIR}/${SSH_DIR}/${VMNAME}-hostkey" -P "" -C ""
-
-    [ -f "${CLOUDINIT_DATA}/user-data" ] || newUserData
-    # ToDo: Use meta-data to set hostname for DNS
-    [ -f "${CLOUDINIT_DATA}/meta-data" ] || touch "${CLOUDINIT_DATA}/meta-data"
-}
-
-newUserData() {
-    # read exits with non-zero exit code when encountering EOF.
-    # ToDo: only catch "EOF" error-code
-    IFS= read -rd '' HOSTKEY_ED25519_PRIV < "${SSH_DIR}/${VMNAME}-hostkey" || true
-    env \
-        SSH_PUBKEY="$(cat "${SSH_DIR}/${VMNAME}.pub")" \
-        HOSTKEY_ED25519_PRIV="$HOSTKEY_ED25519_PRIV" \
-        HOSTKEY_ED25519_PUB="$(cat "${SSH_DIR}/${VMNAME}-hostkey.pub")" \
-        yq e '.ssh_keys.ed25519_private = strenv(HOSTKEY_ED25519_PRIV) |
-            .ssh_keys.ed25519_public = strenv(HOSTKEY_ED25519_PUB) |
-            .users[0].ssh_authorized_keys[0] = strenv(SSH_PUBKEY)' \
-            "${TEMPLATES}/cloudinit/user-data.tpl" > "${CLOUDINIT_DATA}/user-data"
-}
 
 createVM() {
     virt-install \
@@ -79,7 +52,9 @@ initVM() {
     grep "^${VMNAME}$" <(virsh list --state-running --name) || virsh start "${VMNAME}"
 }
 
-# main
+# MAIN
+
+## DISK IMAGE
 [ -d "$CONFIGDIR" ] || (echo "init config dir" >&2 && mkdir "$CONFIGDIR")
 
 if [ ! -f "$DISKIMAGE" ]; then
@@ -87,7 +62,31 @@ if [ ! -f "$DISKIMAGE" ]; then
     validateImage "$DISKIMAGE_SIGNINGKEY" "$DISKIMAGE_CHECKSUM_URI" "$DISKIMAGE_CHECKSUM_SIG_URI" "$DISKIMAGE"
 fi
 
-initCloudInit
+## CLOUD INIT DATA
+[ -d "$CLOUDINIT_DATA" ] || (echo "create cloudinit dir" >&2 && mkdir -p "$CLOUDINIT_DATA")
+[ -d "$SSH_DIR" ] || (echo "create ssh dir" >&2 && mkdir -p "$SSH_DIR")
+
+# ToDo: It should be checked whether VM was already created before doing this.
+# If there is a pub key in cloud init that was already deployed to VM it must be checked that the required privkey is avail.
+# For now only check that there is no priv key file yet
+[ -f "${SSH_DIR}/${VMNAME}" ] || ssh-keygen -t ed25519 -f "${WORKDIR}/${SSH_DIR}/${VMNAME}" -P ""
+[ -f "${SSH_DIR}/${VMNAME}-hostkey" ] || ssh-keygen -t ed25519 -f "${WORKDIR}/${SSH_DIR}/${VMNAME}-hostkey" -P "" -C "${VMNAME}"
+
+if [ ! -f "${CLOUDINIT_DATA}/user-data" ]; then
+    # read exits with non-zero exit code when encountering EOF.
+    # ToDo: only catch "EOF" error-code
+    IFS= read -rd '' HOSTKEY_ED25519_PRIV < "${SSH_DIR}/${VMNAME}-hostkey" || true
+    addSSHKeys_ED25519 \
+        "${TEMPLATES}/cloudinit/user-data.tpl" \
+        "$(cat "${SSH_DIR}/${VMNAME}.pub")" \
+        "$HOSTKEY_ED25519_PRIV" \
+        "$(cat "${SSH_DIR}/${VMNAME}-hostkey.pub")" \
+        > "${CLOUDINIT_DATA}/user-data"
+fi
+
+# ToDo: Use meta-data to set hostname for DNS
+[ -f "${CLOUDINIT_DATA}/meta-data" ] || touch "${CLOUDINIT_DATA}/meta-data"
+
 initVM
 
 #virsh --connect qemu:///system console "${VMNAME}"
