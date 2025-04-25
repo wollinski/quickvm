@@ -105,4 +105,4 @@ echo "Waiting ${CONNECTION_DELAY_SECONDS} seconds for VM to become available via
 sleep "$CONNECTION_DELAY_SECONDS"
 
 [ -f "${SSH_DIR}/known_hosts" ] || cat <(echo -n "$VMIP ") "${WORKDIR}/${SSH_DIR}/${VMNAME}-hostkey.pub" > "${SSH_DIR}/known_hosts"
-ssh -i "${SSH_DIR}/${VMNAME}" -o "UserKnownHostsFile=${SSH_DIR}/known_hosts" developer@"${VMIP}"
+ssh -i "${SSH_DIR}/${VMNAME}" -o "IdentitiesOnly=yes" -o "UserKnownHostsFile=${SSH_DIR}/known_hosts" developer@"${VMIP}"
