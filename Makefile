@@ -16,10 +16,10 @@ $(cloudinittemplatepath): | $(templatepath)
 	@echo "creating dir for cloud init templates"
 	mkdir -p $(cloudinittemplatepath)
 
-$(cloudinittemplatepath)/user-data.tpl: | $(cloudinittemplatepath)
+$(cloudinittemplatepath)/user-data.tpl: templates/cloudinit/user-data.tpl | $(cloudinittemplatepath)
 	cp templates/cloudinit/user-data.tpl $(cloudinittemplatepath)
 
-$(cloudinittemplatepath)/meta-data.tpl: | $(cloudinittemplatepath)
+$(cloudinittemplatepath)/meta-data.tpl: templates/cloudinit/meta-data.tpl | $(cloudinittemplatepath)
 	cp templates/cloudinit/meta-data.tpl $(cloudinittemplatepath)
 
 .PHONY: cloudinit-templates
@@ -33,23 +33,23 @@ $(libpath):
 	@echo "creating lib dir"
 	mkdir -p $(libpath)
 
-$(libpath)/validateImage.sh: | $(libpath)
+$(libpath)/validateImage.sh: lib/validateImage.sh | $(libpath)
 	cp lib/validateImage.sh $(libpath)
 
-$(libpath)/cloudInit.sh: | $(libpath)
+$(libpath)/cloudInit.sh: lib/cloudInit.sh | $(libpath)
 	cp lib/cloudInit.sh $(libpath)
 
 .PHONY: lib
 lib: $(libpath)/validateImage.sh $(libpath)/cloudInit.sh
 
-$(binpath):
+$(binpath): scripts/quickvm.sh
 	install scripts/quickvm.sh $(binpath)
 
 .PHONY: install
 install: lib $(binpath)
 
 # https://wiki.ubuntu.com/SecurityTeam/FAQ#GPG_Keys_used_by_Ubuntu
-$(keyringpath):
+$(keyringpath): ubuntu-signingkey.asc
 	@mkdir -p `dirname $(keyringpath)`
 	@gpg --dearmor --output $(keyringpath) ubuntu-signingkey.asc
 
