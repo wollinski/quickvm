@@ -6,12 +6,13 @@ use libvirt to create a (disposable) VM with the following features:
   - e.g. directly drop into shell when VM is created or easy access via helper that also colors the terminal so that it is clear one is in VM
 
 # Installation
-
-ToDo:
-- install script in $PATH
-- cache cloud image on disk?
-  - should we use minimal cloud images?
-    - https://cloud-images.ubuntu.com/minimal/releases/
+To install `quickvm` and its dependencies:
+```bash
+sudo make keyring
+make templates
+sudo make install
+```
+Details for the separate steps are outlined below.
 
 ## install image signing key
 To validate ubuntu images after download a signing key is installed as follows:
@@ -46,12 +47,17 @@ make templates
 ```
 
 ## quickvm
+To install the `quickvm` script (default: `/usr/local/bin/quickvm`) and required libraries (see below):
+```bash
+sudo make install
+```
+
+### quickvm libraries
 Functions used by the main script are sourced from `$QUICKVM_LIBS` (default: `/usr/local/share/quickvm`). To create the required files in the default location:
 ```bash
 sudo make lib
 ```
-
-ToDo: Install `quickvm.sh`
+*Note:* This is implictly done when using `sudo make install` and does not need to be called separately in this case.
 
 # ToDo
 
@@ -62,6 +68,10 @@ Example as starting point for automation
 3. start VM
 4. `sudo growpart /dev/vda 1 # resizes partition /dev/vda1`
 5. `sudo resize2fs /dev/vda1`
+
+## cache cloud image on disk
+should we use minimal cloud images?
+https://cloud-images.ubuntu.com/minimal/releases/
 
 # Links
 https://www.surlyjake.com/blog/2020/10/09/ubuntu-cloud-images-in-libvirt-and-virt-manager/

@@ -4,6 +4,7 @@ templatepath = $(userconfig)/templates
 cloudinittemplatepath = $(templatepath)/cloudinit
 
 libpath = /usr/local/lib/quickvm
+binpath = /usr/local/bin/quickvm
 
 keyringpath = /usr/local/share/quickvm/ubuntu-signingkey.gpg
 
@@ -40,6 +41,12 @@ $(libpath)/cloudInit.sh: | $(libpath)
 
 .PHONY: lib
 lib: $(libpath)/validateImage.sh $(libpath)/cloudInit.sh
+
+$(binpath):
+	install scripts/quickvm.sh $(binpath)
+
+.PHONY: install
+install: lib $(binpath)
 
 # https://wiki.ubuntu.com/SecurityTeam/FAQ#GPG_Keys_used_by_Ubuntu
 $(keyringpath):
